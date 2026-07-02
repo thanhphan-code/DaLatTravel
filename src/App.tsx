@@ -11,6 +11,7 @@ import TripPlanner from "./pages/TripPlanner";
 import Food from "./pages/Food";
 import Homestays from "./pages/Homestays";
 import SavedTrips from "./pages/SavedTrips";
+import AboutAI from "./pages/AboutAI";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const AnimatedRoutes = () => {
         <Route path="/food" element={<Food />} />
         <Route path="/homestays" element={<Homestays />} />
         <Route path="/saved" element={<SavedTrips />} />
+        <Route path="/about-ai" element={<AboutAI />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

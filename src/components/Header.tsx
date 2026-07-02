@@ -14,6 +14,7 @@ const links = [
   { to: "/food", label: "Food & Cafes" },
   { to: "/homestays", label: "Homestays" },
   { to: "/saved", label: "Saved Trips" },
+  { to: "/about-ai", label: "About AI" },
 ];
 
 const Header = ({ transparent = false }: HeaderProps) => {
