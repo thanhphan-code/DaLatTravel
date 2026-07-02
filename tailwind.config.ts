@@ -52,19 +52,15 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        sage: {
-          DEFAULT: "hsl(var(--sage))",
-          dark: "hsl(var(--sage-dark))",
+        pine: {
+          DEFAULT: "hsl(var(--pine))",
+          dark: "hsl(var(--pine-dark))",
         },
-        cream: {
-          DEFAULT: "hsl(var(--cream))",
-        },
-        gold: {
-          DEFAULT: "hsl(var(--gold))",
-        },
-        rose: {
-          light: "hsl(var(--rose))",
-        },
+        mist: "hsl(var(--mist))",
+        cream: "hsl(var(--cream))",
+        apricot: "hsl(var(--apricot))",
+        moss: "hsl(var(--moss))",
+
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background, var(--background)))",
           foreground: "hsl(var(--sidebar-foreground, var(--foreground)))",
