@@ -1,34 +1,56 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Mountain } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface HeaderProps {
   transparent?: boolean;
 }
 
+const links = [
+  { to: "/", label: "Home" },
+  { to: "/explore", label: "Explore Da Lat" },
+  { to: "/planner", label: "AI Trip Planner" },
+  { to: "/food", label: "Food & Cafes" },
+  { to: "/homestays", label: "Homestays" },
+  { to: "/saved", label: "Saved Trips" },
+];
+
 const Header = ({ transparent = false }: HeaderProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
-  const links = [
-    { to: "/story", label: "Our Story" },
-    { to: "/travel", label: "Travel & Stay" },
-    { to: "/registry", label: "Registry" },
-  ];
+  const isActive = (to: string) =>
+    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
 
   return (
-    <header className={`${transparent ? "absolute" : "sticky"} top-0 left-0 right-0 z-50 ${transparent ? "bg-transparent" : "bg-card/95 backdrop-blur-sm border-b border-border"}`}>
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
-        <nav className="hidden md:flex items-center space-x-8">
+    <header
+      className={`${transparent ? "absolute" : "sticky"} top-0 left-0 right-0 z-50 ${
+        transparent ? "bg-transparent" : "bg-card/90 backdrop-blur-md border-b border-border"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-5 md:px-10 py-4 flex items-center justify-between gap-6">
+        <Link
+          to="/"
+          className={`flex items-center gap-2 font-serif text-lg md:text-xl tracking-tight font-semibold ${
+            transparent ? "text-white" : "text-foreground"
+          }`}
+        >
+          <span className={`h-8 w-8 rounded-full grid place-items-center ${transparent ? "bg-white/20" : "bg-primary/10"}`}>
+            <Mountain className={`h-4 w-4 ${transparent ? "text-white" : "text-primary"}`} />
+          </span>
+          TravelDaLat<span className="text-accent">2026</span>
+        </Link>
+
+        <nav className="hidden lg:flex items-center gap-7">
           {links.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={`text-sm tracking-wide font-sans transition-colors duration-200 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-px after:bottom-[-2px] after:left-0 after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left ${
+              className={`text-sm font-medium transition-colors ${
                 transparent
-                  ? `hover:text-white/80 after:bg-white ${location.pathname === link.to ? "text-white after:scale-x-100 after:origin-bottom-left" : "text-white/70"}`
-                  : `hover:text-foreground after:bg-foreground ${location.pathname === link.to ? "text-foreground after:scale-x-100 after:origin-bottom-left" : "text-muted-foreground"}`
+                  ? `${isActive(link.to) ? "text-white" : "text-white/75"} hover:text-white`
+                  : `${isActive(link.to) ? "text-primary" : "text-muted-foreground"} hover:text-primary`
               }`}
             >
               {link.label}
@@ -36,23 +58,17 @@ const Header = ({ transparent = false }: HeaderProps) => {
           ))}
         </nav>
 
-        <Link to="/" className={`font-serif text-xl md:text-2xl tracking-wider ${transparent ? "text-white" : "text-foreground"}`}>
-          S&A 10.14.25
-        </Link>
-
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <Link
-            to="/rsvp"
-            className={`px-6 py-2 text-sm tracking-widest uppercase font-sans hover:scale-105 transition-all duration-200 ${
-              transparent ? "bg-white text-foreground hover:bg-white/90" : "bg-foreground text-card hover:bg-foreground/80"
-            }`}
+            to="/planner"
+            className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-soft"
           >
-            RSVP
+            Plan My Trip
           </Link>
         </div>
 
         <button
-          className={`md:hidden ${transparent ? "text-white" : "text-foreground"}`}
+          className={`lg:hidden ${transparent ? "text-white" : "text-foreground"}`}
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle navigation menu"
         >
@@ -63,41 +79,31 @@ const Header = ({ transparent = false }: HeaderProps) => {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            className="md:hidden bg-card border-t border-border px-6 py-6 space-y-4 overflow-hidden"
+            className="lg:hidden bg-card border-t border-border px-6 py-6 space-y-3 overflow-hidden"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.25 }}
           >
-            {links.map((link, i) => (
-              <motion.div
-                key={link.to}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.3 }}
-              >
-                <Link
-                  to={link.to}
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-sm tracking-wide font-sans text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              </motion.div>
-            ))}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: links.length * 0.08, duration: 0.3 }}
-            >
+            {links.map((link) => (
               <Link
-                to="/rsvp"
+                key={link.to}
+                to={link.to}
                 onClick={() => setMobileOpen(false)}
-                className="block bg-foreground text-card px-6 py-2 text-sm tracking-widest uppercase font-sans text-center"
+                className={`block text-base font-medium ${
+                  isActive(link.to) ? "text-primary" : "text-foreground/80"
+                }`}
               >
-                RSVP
+                {link.label}
               </Link>
-            </motion.div>
+            ))}
+            <Link
+              to="/planner"
+              onClick={() => setMobileOpen(false)}
+              className="block text-center bg-primary text-primary-foreground rounded-full py-2.5 text-sm font-medium"
+            >
+              Plan My Trip
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>

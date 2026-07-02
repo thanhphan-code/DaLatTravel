@@ -5,11 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
-import OurStory from "./pages/OurStory";
-import Travel from "./pages/Travel";
-import Registry from "./pages/Registry";
-import Cart from "./pages/Cart";
-import RSVP from "./pages/RSVP";
+import Explore from "./pages/Explore";
+import PlaceDetail from "./pages/PlaceDetail";
+import TripPlanner from "./pages/TripPlanner";
+import Food from "./pages/Food";
+import Homestays from "./pages/Homestays";
+import SavedTrips from "./pages/SavedTrips";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,11 +21,12 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
-        <Route path="/story" element={<OurStory />} />
-        <Route path="/travel" element={<Travel />} />
-        <Route path="/registry" element={<Registry />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/rsvp" element={<RSVP />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/place/:id" element={<PlaceDetail />} />
+        <Route path="/planner" element={<TripPlanner />} />
+        <Route path="/food" element={<Food />} />
+        <Route path="/homestays" element={<Homestays />} />
+        <Route path="/saved" element={<SavedTrips />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
