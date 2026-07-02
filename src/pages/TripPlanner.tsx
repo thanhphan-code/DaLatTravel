@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Loader2, MapPin, Sun, Moon, Coffee, Save } from "lucide-react";
+import { Sparkles, Loader2, MapPin, Sun, Moon, Coffee, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
+import { supabase } from "@/integrations/supabase/client";
+import { SAVED_TRIPS_KEY, type SavedTrip } from "@/data/dalat";
 
 const dayOptions = ["1 day", "2 days 1 night", "3 days 2 nights", "4 days 3 nights"];
 const travelTypes = ["solo", "couple", "friends", "family"];
@@ -12,57 +14,18 @@ const budgets = ["low", "medium", "high"];
 const interestsList = ["cafes", "food", "photography", "cloud hunting", "nature", "romantic places", "local culture"];
 const transports = ["motorbike", "taxi", "car"];
 
-type Itinerary = {
-  days: {
-    label: string;
-    morning: { time: string; place: string; note: string };
-    afternoon: { time: string; place: string; note: string };
-    evening: { time: string; place: string; note: string };
-    food: string[];
-    cost: string;
-    notes: string;
-  }[];
+type DayPlan = {
+  label: string;
+  theme?: string;
+  morning: { time: string; place: string; note: string };
+  afternoon: { time: string; place: string; note: string };
+  evening: { time: string; place: string; note: string };
+  food: string[];
+  cost: string;
+  notes: string;
 };
 
-const mockItinerary = (numDays: number, style: string): Itinerary => {
-  const template = [
-    {
-      morning: { time: "06:00", place: "Lang Biang Mountain — sunrise cloud hunting", note: "Take a jeep to Radar Peak, bring a warm jacket." },
-      afternoon: { time: "13:00", place: "Cau Dat Tea Hill", note: "Explore the endless tea rows and old French factory." },
-      evening: { time: "18:30", place: "Da Lat Night Market", note: "Grilled skewers + hot soy milk are a must." },
-      food: ["Bánh căn breakfast", "Lẩu gà lá é dinner"],
-      cost: "600,000 - 900,000 VND",
-      notes: "Book jeep the night before. Roads can be foggy — ride carefully.",
-    },
-    {
-      morning: { time: "07:30", place: "Xuan Huong Lake stroll + cafe", note: "Coffee at a lakeside cafe, then pedal boat." },
-      afternoon: { time: "14:00", place: "Domaine de Marie Church + Datanla Waterfall", note: "Alpine coaster is worth it." },
-      evening: { time: "19:00", place: "Nem nướng dinner + rooftop dessert cafe", note: "End with warm soy milk." },
-      food: ["Nem nướng", "Hot soy milk", "Bánh tráng nướng"],
-      cost: "500,000 - 800,000 VND",
-      notes: "Bring a light raincoat, afternoon showers are common.",
-    },
-    {
-      morning: { time: "08:00", place: "Flower gardens + hidden pine forest cafe", note: "Perfect for photos and slow mornings." },
-      afternoon: { time: "13:30", place: "Trai Mat + Linh Phuoc Pagoda", note: "Colorful mosaic temple, half day trip." },
-      evening: { time: "19:30", place: "Craft beer at a converted villa", note: "Great way to wrap up the trip." },
-      food: ["Local hotpot", "Artisan coffee"],
-      cost: "450,000 - 700,000 VND",
-      notes: "Save receipts for expense splits.",
-    },
-    {
-      morning: { time: "07:00", place: "Sunrise at Cau Dat + breakfast picnic", note: "Bring a blanket and hot drinks." },
-      afternoon: { time: "12:30", place: "Local market lunch + strawberry farm", note: "Pick strawberries and try fresh jam." },
-      evening: { time: "19:00", place: "Farewell dinner + acoustic cafe", note: "Slow Da Lat evening." },
-      food: ["Strawberries", "Chicken hotpot"],
-      cost: "500,000 - 750,000 VND",
-      notes: `Style: ${style}. Adjust pace to your energy.`,
-    },
-  ];
-  return {
-    days: template.slice(0, numDays).map((d, i) => ({ label: `Day ${i + 1}`, ...d })),
-  };
-};
+type Itinerary = { summary?: string; days: DayPlan[] };
 
 const TripPlanner = () => {
   const [days, setDays] = useState(dayOptions[2]);
@@ -72,25 +35,47 @@ const TripPlanner = () => {
   const [transport, setTransport] = useState("motorbike");
   const [startTime, setStartTime] = useState("08:00");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Itinerary | null>(null);
 
   const toggle = (v: string) =>
     setInterests((prev) => (prev.includes(v) ? prev.filter((i) => i !== v) : [...prev, v]));
 
-  const generate = () => {
+  const generate = async () => {
     setLoading(true);
+    setError(null);
     setResult(null);
-    // TODO: replace with POST /api/trip-plan to FastAPI backend
-    setTimeout(() => {
-      const numDays = parseInt(days) || 1;
-      setResult(mockItinerary(numDays, travelType));
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-trip-planner", {
+        body: { days, travelType, budget, interests, transport, startTime },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.days?.length) throw new Error("AI didn't return an itinerary");
+      setResult(data as Itinerary);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Something went wrong";
+      setError(msg);
+      toast.error(msg);
+    } finally {
       setLoading(false);
-    }, 900);
+    }
   };
 
   const save = () => {
-    // TODO: persist via API. For now local toast.
-    toast.success("Itinerary saved to your Saved Trips");
+    if (!result) return;
+    const trip: SavedTrip = {
+      id: `trip-${Date.now()}`,
+      name: result.summary?.slice(0, 60) || `${travelType} trip · ${days}`,
+      days: result.days.length,
+      budget,
+      travelType,
+      createdAt: new Date().toISOString().slice(0, 10),
+      itinerary: result,
+    };
+    const existing: SavedTrip[] = JSON.parse(localStorage.getItem(SAVED_TRIPS_KEY) || "[]");
+    localStorage.setItem(SAVED_TRIPS_KEY, JSON.stringify([trip, ...existing]));
+    toast.success("Itinerary saved to Saved Trips");
   };
 
   return (
@@ -99,11 +84,11 @@ const TripPlanner = () => {
       <div className="max-w-6xl mx-auto px-6 md:px-12 py-14">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-mist text-primary text-sm mb-4">
-            <Sparkles className="h-3.5 w-3.5" /> AI Trip Planner
+            <Sparkles className="h-3.5 w-3.5" /> AI Trip Planner · Powered by Gemini
           </div>
           <h1 className="font-serif text-4xl md:text-5xl font-semibold">Design your Da Lat trip</h1>
           <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-            Tell us how you like to travel — our AI will craft a personalized day-by-day itinerary.
+            Tell us how you like to travel — our AI crafts a personalized day-by-day itinerary in seconds.
           </p>
         </div>
 
@@ -151,10 +136,35 @@ const TripPlanner = () => {
               className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-apricot text-white font-medium shadow-soft hover:brightness-110 transition disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {loading ? "Generating itinerary..." : "Generate Itinerary"}
+              {loading ? "AI is crafting your trip..." : "Generate Itinerary"}
             </button>
           </div>
         </div>
+
+        {error && (
+          <div className="mt-8 flex items-start gap-3 p-5 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20">
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Couldn't generate itinerary</p>
+              <p className="text-sm mt-1 opacity-90">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {loading && !result && (
+          <div className="mt-12 grid gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-card rounded-3xl p-8 shadow-soft border border-border animate-pulse">
+                <div className="h-6 w-32 bg-muted rounded" />
+                <div className="mt-6 space-y-4">
+                  <div className="h-4 bg-muted rounded w-3/4" />
+                  <div className="h-4 bg-muted rounded w-2/3" />
+                  <div className="h-4 bg-muted rounded w-5/6" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {result && (
           <motion.div
@@ -163,7 +173,10 @@ const TripPlanner = () => {
             className="mt-12 space-y-6"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-serif text-3xl font-semibold">Your AI itinerary</h2>
+              <div>
+                <h2 className="font-serif text-3xl font-semibold">Your AI itinerary</h2>
+                {result.summary && <p className="text-muted-foreground mt-1">{result.summary}</p>}
+              </div>
               <button
                 onClick={save}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition"
@@ -175,7 +188,10 @@ const TripPlanner = () => {
             <div className="grid gap-6">
               {result.days.map((day) => (
                 <div key={day.label} className="bg-card rounded-3xl p-6 md:p-8 shadow-soft border border-border">
-                  <h3 className="font-serif text-2xl font-semibold text-primary">{day.label}</h3>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 className="font-serif text-2xl font-semibold text-primary">{day.label}</h3>
+                    {day.theme && <span className="text-sm text-apricot font-medium">{day.theme}</span>}
+                  </div>
                   <div className="mt-5 space-y-4">
                     <TimeBlock icon={Sun} tint="bg-apricot/15 text-apricot" title="Morning" time={day.morning.time} place={day.morning.place} note={day.morning.note} />
                     <TimeBlock icon={Coffee} tint="bg-mist text-primary" title="Afternoon" time={day.afternoon.time} place={day.afternoon.place} note={day.afternoon.note} />
@@ -184,7 +200,7 @@ const TripPlanner = () => {
                   <div className="mt-6 grid md:grid-cols-3 gap-4 pt-6 border-t border-border text-sm">
                     <div>
                       <p className="text-xs uppercase tracking-widest text-muted-foreground">Food recommendations</p>
-                      <ul className="mt-1 space-y-0.5">{day.food.map((f) => <li key={f}>• {f}</li>)}</ul>
+                      <ul className="mt-1 space-y-0.5">{day.food?.map((f) => <li key={f}>• {f}</li>)}</ul>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-widest text-muted-foreground">Estimated cost</p>
@@ -230,7 +246,9 @@ const ChipGroup = ({ options, value, onChange }: { options: string[]; value: str
   </div>
 );
 
-const TimeBlock = ({ icon: Icon, tint, title, time, place, note }: any) => (
+const TimeBlock = ({ icon: Icon, tint, title, time, place, note }: {
+  icon: React.ElementType; tint: string; title: string; time: string; place: string; note: string;
+}) => (
   <div className="flex gap-4">
     <div className={`h-10 w-10 rounded-full grid place-items-center shrink-0 ${tint}`}>
       <Icon className="h-5 w-5" />
