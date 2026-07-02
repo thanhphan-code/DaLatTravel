@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
 import ScrollReveal from "@/components/ScrollReveal";
-import heroImg from "@/assets/dalat-hero.jpg";
+import heroImg from "@/assets/hero-dalat.jpg";
 import { categories, places, foods } from "@/data/dalat";
 
 const catIcons: Record<string, React.ElementType> = {

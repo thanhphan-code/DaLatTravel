@@ -1,12 +1,29 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Wallet, Users, ArrowRight, Sparkles } from "lucide-react";
+import { Calendar, Wallet, Users, ArrowRight, Sparkles, Trash2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
-import { initialSavedTrips } from "@/data/dalat";
+import { initialSavedTrips, SAVED_TRIPS_KEY, type SavedTrip } from "@/data/dalat";
+import { toast } from "sonner";
 
 const SavedTrips = () => {
-  const trips = initialSavedTrips; // TODO: fetch from backend
+  const [trips, setTrips] = useState<SavedTrip[]>([]);
+
+  useEffect(() => {
+    const stored: SavedTrip[] = JSON.parse(localStorage.getItem(SAVED_TRIPS_KEY) || "[]");
+    setTrips([...stored, ...initialSavedTrips]);
+  }, []);
+
+  const remove = (id: string) => {
+    const stored: SavedTrip[] = JSON.parse(localStorage.getItem(SAVED_TRIPS_KEY) || "[]");
+    const next = stored.filter((t) => t.id !== id);
+    localStorage.setItem(SAVED_TRIPS_KEY, JSON.stringify(next));
+    setTrips([...next, ...initialSavedTrips]);
+    toast.success("Trip removed");
+  };
+
+  const isLocal = (id: string) => !initialSavedTrips.find((t) => t.id === id);
 
   return (
     <PageTransition>
@@ -30,17 +47,26 @@ const SavedTrips = () => {
         ) : (
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {trips.map((t) => (
-              <div key={t.id} className="bg-card rounded-3xl p-6 shadow-soft border border-border">
+              <div key={t.id} className="bg-card rounded-3xl p-6 shadow-soft border border-border relative group">
+                {isLocal(t.id) && (
+                  <button
+                    onClick={() => remove(t.id)}
+                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition p-2 rounded-full hover:bg-destructive/10 text-destructive"
+                    aria-label="Delete trip"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
                 <p className="text-xs text-muted-foreground">Saved {t.createdAt}</p>
-                <h3 className="font-serif text-2xl font-semibold mt-1">{t.name}</h3>
+                <h3 className="font-serif text-2xl font-semibold mt-1 pr-8">{t.name}</h3>
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4 text-primary" /> {t.days} days</div>
-                  <div className="flex items-center gap-2 text-muted-foreground"><Wallet className="h-4 w-4 text-primary" /> {t.budget} budget</div>
-                  <div className="flex items-center gap-2 text-muted-foreground"><Users className="h-4 w-4 text-primary" /> {t.travelType}</div>
+                  <div className="flex items-center gap-2 text-muted-foreground capitalize"><Wallet className="h-4 w-4 text-primary" /> {t.budget} budget</div>
+                  <div className="flex items-center gap-2 text-muted-foreground capitalize"><Users className="h-4 w-4 text-primary" /> {t.travelType}</div>
                 </div>
-                <button className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all">
-                  View detail <ArrowRight className="h-4 w-4" />
-                </button>
+                <Link to="/planner" className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all">
+                  Plan another <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             ))}
           </div>
