@@ -11,8 +11,10 @@ import TripPlanner from "./pages/TripPlanner";
 import Food from "./pages/Food";
 import Homestays from "./pages/Homestays";
 import SavedTrips from "./pages/SavedTrips";
-import AboutAI from "./pages/AboutAI";
+import SavedTripDetail from "./pages/SavedTripDetail";
+import AboutProject from "./pages/AboutProject";
 import NotFound from "./pages/NotFound";
+import TravelChat from "./components/TravelChat";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +30,8 @@ const AnimatedRoutes = () => {
         <Route path="/food" element={<Food />} />
         <Route path="/homestays" element={<Homestays />} />
         <Route path="/saved" element={<SavedTrips />} />
-        <Route path="/about-ai" element={<AboutAI />} />
+        <Route path="/saved/:id" element={<SavedTripDetail />} />
+        <Route path="/about" element={<AboutProject />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
@@ -42,6 +45,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AnimatedRoutes />
+        <TravelChat />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mountain, Instagram, Facebook, Youtube, Mail } from "lucide-react";
+import { Mountain, Github, Facebook, Mail } from "lucide-react";
 
 const Footer = () => (
   <footer className="bg-pine-dark text-cream mt-24">
@@ -12,41 +12,40 @@ const Footer = () => (
           TravelDaLat<span className="text-apricot">2026</span>
         </div>
         <p className="text-sm text-cream/70 leading-relaxed">
-          Discover Da Lat with AI-powered itineraries, curated cafes, hidden
-          photo spots and cozy homestays in Vietnam's city of eternal spring.
+          Cẩm nang khám phá Đà Lạt với lịch trình cá nhân, quán cà phê, địa điểm
+          chụp ảnh, món ăn và homestay được tuyển chọn.
         </p>
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-widest text-cream/60 mb-3">Quick Links</p>
+        <p className="text-xs uppercase tracking-widest text-cream/60 mb-3">Liên kết nhanh</p>
         <div className="space-y-2 text-sm">
-          <Link to="/explore" className="block hover:text-apricot transition-colors">Explore Da Lat</Link>
-          <Link to="/planner" className="block hover:text-apricot transition-colors">AI Trip Planner</Link>
-          <Link to="/food" className="block hover:text-apricot transition-colors">Food & Cafes</Link>
-          <Link to="/homestays" className="block hover:text-apricot transition-colors">Homestays</Link>
-          <Link to="/saved" className="block hover:text-apricot transition-colors">Saved Trips</Link>
+          <Link to="/explore" className="block hover:text-apricot transition-colors">Khám phá Đà Lạt</Link>
+          <Link to="/planner" className="block hover:text-apricot transition-colors">Lập lịch trình</Link>
+          <Link to="/food" className="block hover:text-apricot transition-colors">Ẩm thực và cà phê</Link>
+          <Link to="/homestays" className="block hover:text-apricot transition-colors">Lưu trú</Link>
+          <Link to="/saved" className="block hover:text-apricot transition-colors">Chuyến đã lưu</Link>
         </div>
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-widest text-cream/60 mb-3">Contact</p>
-        <a href="mailto:hello@traveldalat2026.com" className="flex items-center gap-2 text-sm hover:text-apricot transition-colors">
-          <Mail className="h-4 w-4" /> hello@traveldalat2026.com
+        <p className="text-xs uppercase tracking-widest text-cream/60 mb-3">Liên hệ</p>
+        <a href="mailto:phanvanthanhk149@gmail.com" className="flex items-center gap-2 text-sm hover:text-apricot transition-colors">
+          <Mail className="h-4 w-4" /> phanvanthanhk149@gmail.com
         </a>
-        <p className="text-sm text-cream/70 mt-2">Da Lat, Lam Dong, Vietnam</p>
+        <p className="text-sm text-cream/70 mt-2">Đà Lạt, Lâm Đồng, Việt Nam</p>
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-widest text-cream/60 mb-3">Follow</p>
+        <p className="text-xs uppercase tracking-widest text-cream/60 mb-3">Theo dõi</p>
         <div className="flex gap-3">
-          <a href="#" aria-label="Instagram" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-apricot transition-colors"><Instagram className="h-4 w-4" /></a>
+          <a href="https://github.com/thanhphan-code" target="_blank" rel="noreferrer" aria-label="GitHub" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-apricot transition-colors"><Github className="h-4 w-4" /></a>
           <a href="#" aria-label="Facebook" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-apricot transition-colors"><Facebook className="h-4 w-4" /></a>
-          <a href="#" aria-label="YouTube" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-apricot transition-colors"><Youtube className="h-4 w-4" /></a>
         </div>
       </div>
     </div>
     <div className="border-t border-white/10 py-5 text-center text-xs text-cream/60">
-      © 2026 TravelDaLat2026 · Made for travelers who love the mountains
+      © 2026 TravelDaLat2026 · Phát triển bởi Phan Văn Thành
     </div>
   </footer>
 );

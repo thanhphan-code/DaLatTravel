@@ -8,13 +8,13 @@ interface HeaderProps {
 }
 
 const links = [
-  { to: "/", label: "Home" },
-  { to: "/explore", label: "Explore Da Lat" },
-  { to: "/planner", label: "AI Trip Planner" },
-  { to: "/food", label: "Food & Cafes" },
-  { to: "/homestays", label: "Homestays" },
-  { to: "/saved", label: "Saved Trips" },
-  { to: "/about-ai", label: "About AI" },
+  { to: "/", label: "Trang chủ" },
+  { to: "/explore", label: "Khám phá" },
+  { to: "/planner", label: "Lập lịch trình" },
+  { to: "/food", label: "Ẩm thực" },
+  { to: "/homestays", label: "Lưu trú" },
+  { to: "/saved", label: "Chuyến đã lưu" },
+  { to: "/about", label: "Giới thiệu" },
 ];
 
 const Header = ({ transparent = false }: HeaderProps) => {
@@ -64,7 +64,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
             to="/planner"
             className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-soft"
           >
-            Plan My Trip
+            Lập kế hoạch
           </Link>
         </div>
 
@@ -103,7 +103,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
               onClick={() => setMobileOpen(false)}
               className="block text-center bg-primary text-primary-foreground rounded-full py-2.5 text-sm font-medium"
             >
-              Plan My Trip
+              Lập kế hoạch
             </Link>
           </motion.div>
         )}

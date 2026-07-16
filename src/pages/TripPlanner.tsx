@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Sparkles,
@@ -12,29 +13,55 @@ import {
   RefreshCw,
   Settings2,
   Info,
+  CalendarDays,
+  Users,
+  WalletCards,
+  Heart,
+  Bike,
+  Clock3,
+  Check,
+  Utensils,
+  Camera,
+  CloudSun,
+  Trees,
+  Landmark,
+  ArrowRight,
+  Shuffle,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
-import { supabase } from "@/integrations/supabase/client";
-import { SAVED_TRIPS_KEY, type SavedTrip } from "@/data/dalat";
+import { type SavedTrip } from "@/data/dalat";
+import { findTrip, readTrips, writeTrips } from "@/lib/savedTrips";
 
-const dayOptions = ["1 day", "2 days 1 night", "3 days 2 nights", "4 days 3 nights"];
-const travelTypes = ["solo", "couple", "friends", "family"];
-const budgets = ["low", "medium", "high"];
+const dayOptions = ["1 ngày", "2 ngày 1 đêm", "3 ngày 2 đêm", "4 ngày 3 đêm"];
+const travelTypes = ["đi một mình", "cặp đôi", "bạn bè", "gia đình"];
+const budgets = ["tiết kiệm", "trung bình", "cao"];
 const interestsList = [
-  "cafes",
-  "food",
-  "photography",
-  "cloud hunting",
-  "nature",
-  "romantic places",
-  "local culture",
+  "quán cà phê",
+  "ẩm thực",
+  "chụp ảnh",
+  "săn mây",
+  "thiên nhiên",
+  "địa điểm lãng mạn",
+  "văn hóa địa phương",
 ];
-const transports = ["motorbike", "taxi", "car"];
+const transports = ["xe máy", "taxi", "ô tô"];
 
-type TimeSlot = { time: string; place: string; note: string };
+const interestIcons: Record<string, React.ElementType> = {
+  "quán cà phê": Coffee,
+  "ẩm thực": Utensils,
+  "chụp ảnh": Camera,
+  "săn mây": CloudSun,
+  "thiên nhiên": Trees,
+  "địa điểm lãng mạn": Heart,
+  "văn hóa địa phương": Landmark,
+};
+
+type AlternativePlace = { place: string; address?: string; note: string };
+type TimeSlot = { time: string; place: string; note: string; address?: string; latitude?: number; longitude?: number; alternatives?: AlternativePlace[] };
 type DayPlan = {
   label: string;
   theme?: string;
@@ -81,12 +108,14 @@ const validateItinerary = (data: unknown): data is Itinerary => {
 };
 
 const TripPlanner = () => {
+  const [searchParams] = useSearchParams();
+  const editingTripId = searchParams.get("trip");
   const [prefs, setPrefs] = useState<Prefs>({
     days: dayOptions[2],
-    travelType: "couple",
-    budget: "medium",
-    interests: ["cafes", "cloud hunting"],
-    transport: "motorbike",
+    travelType: "cặp đôi",
+    budget: "trung bình",
+    interests: ["quán cà phê", "săn mây"],
+    transport: "xe máy",
     startTime: "08:00",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof Prefs, string>>>({});
@@ -94,6 +123,18 @@ const TripPlanner = () => {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Itinerary | null>(null);
   const [editing, setEditing] = useState(true);
+
+  useEffect(() => {
+    if (!editingTripId) return;
+    const trip = findTrip(editingTripId);
+    if (!trip) return;
+    const matchingDays = dayOptions.find((option) => Number.parseInt(option, 10) === trip.days) || dayOptions[0];
+    const matchingType = travelTypes.find((option) => option === trip.travelType.toLowerCase()) || travelTypes[0];
+    const matchingBudget = budgets.find((option) => option === trip.budget.toLowerCase()) || budgets[1];
+    setPrefs((current) => ({ ...current, days: matchingDays, travelType: matchingType, budget: matchingBudget }));
+    if (validateItinerary(trip.itinerary)) setResult(trip.itinerary);
+    setEditing(true);
+  }, [editingTripId]);
 
   const update = <K extends keyof Prefs>(k: K, v: Prefs[K]) => {
     setPrefs((p) => ({ ...p, [k]: v }));
@@ -107,14 +148,14 @@ const TripPlanner = () => {
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof Prefs, string>> = {};
-    if (!prefs.days) e.days = "Please choose a duration";
-    if (!prefs.travelType) e.travelType = "Please choose a travel type";
-    if (!prefs.budget) e.budget = "Please choose a budget";
-    if (!prefs.transport) e.transport = "Please choose transportation";
-    if (prefs.interests.length === 0) e.interests = "Pick at least one interest";
+    if (!prefs.days) e.days = "Vui lòng chọn thời lượng";
+    if (!prefs.travelType) e.travelType = "Vui lòng chọn hình thức du lịch";
+    if (!prefs.budget) e.budget = "Vui lòng chọn ngân sách";
+    if (!prefs.transport) e.transport = "Vui lòng chọn phương tiện";
+    if (prefs.interests.length === 0) e.interests = "Chọn ít nhất một sở thích";
     setErrors(e);
     if (Object.keys(e).length > 0) {
-      toast.error("Please complete the form before generating");
+      toast.error("Vui lòng hoàn thành thông tin trước khi tạo lịch trình");
       return false;
     }
     return true;
@@ -125,15 +166,19 @@ const TripPlanner = () => {
     setError(null);
     if (!isRegenerate) setResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke("ai-trip-planner", { body: prefs });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-trip-planner`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify(prefs),
+      });
+      const data = await response.json();
+      if (!response.ok || data?.error) throw new Error(data?.error || `Không thể tạo lịch trình (${response.status})`);
       if (!validateItinerary(data)) {
-        throw new Error("AI returned an incomplete itinerary. Try regenerating.");
+        throw new Error("Lịch trình chưa hoàn chỉnh. Vui lòng tạo lại.");
       }
       setResult(data);
       setEditing(false);
-      toast.success(isRegenerate ? "New itinerary ready" : "Your itinerary is ready");
+      toast.success(isRegenerate ? "Đã tạo lịch trình mới" : "Lịch trình của bạn đã sẵn sàng");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Something went wrong";
       setError(msg);
@@ -151,6 +196,21 @@ const TripPlanner = () => {
 
   const save = () => {
     if (!result) return;
+    if (editingTripId) {
+      const trips = readTrips();
+      const existing = trips.find((item) => item.id === editingTripId);
+      if (existing) {
+        writeTrips(trips.map((item) => item.id === editingTripId ? {
+          ...item,
+          days: result.days.length,
+          budget: prefs.budget,
+          travelType: prefs.travelType,
+          itinerary: result,
+        } : item));
+        toast.success("Đã cập nhật lịch trình");
+        return;
+      }
+    }
     const trip: SavedTrip = {
       id: `trip-${Date.now()}`,
       name: result.summary?.slice(0, 60) || `${prefs.travelType} trip · ${prefs.days}`,
@@ -160,9 +220,9 @@ const TripPlanner = () => {
       createdAt: new Date().toISOString().slice(0, 10),
       itinerary: result,
     };
-    const existing: SavedTrip[] = JSON.parse(localStorage.getItem(SAVED_TRIPS_KEY) || "[]");
-    localStorage.setItem(SAVED_TRIPS_KEY, JSON.stringify([trip, ...existing]));
-    toast.success("Itinerary saved to Saved Trips");
+    const existing: SavedTrip[] = readTrips();
+    writeTrips([trip, ...existing]);
+    toast.success("Đã lưu lịch trình");
   };
 
   return (
@@ -171,75 +231,94 @@ const TripPlanner = () => {
       <div className="max-w-6xl mx-auto px-6 md:px-12 py-14">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-mist text-primary text-sm mb-4">
-            <Sparkles className="h-3.5 w-3.5" /> AI Trip Planner · Powered by Lovable AI
+            <Sparkles className="h-3.5 w-3.5" /> Công cụ lập lịch TravelDaLat2026
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-semibold">Design your Da Lat trip</h1>
+          <h1 className="font-serif text-4xl md:text-5xl font-semibold">Thiết kế chuyến đi Đà Lạt</h1>
           <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-            Tell us how you like to travel — our AI crafts a personalized day-by-day itinerary in seconds.
+            Chọn phong cách du lịch để tạo kế hoạch từng ngày phù hợp với bạn.
           </p>
         </div>
 
         {editing && (
-          <div className="mt-10 bg-card rounded-3xl p-6 md:p-10 shadow-soft border border-border space-y-8">
-            <Field label="Number of days" error={errors.days}>
-              <ChipGroup options={dayOptions} value={prefs.days} onChange={(v) => update("days", v)} />
-            </Field>
-            <div className="grid md:grid-cols-2 gap-8">
-              <Field label="Travel type" error={errors.travelType}>
-                <ChipGroup options={travelTypes} value={prefs.travelType} onChange={(v) => update("travelType", v)} />
-              </Field>
-              <Field label="Budget" error={errors.budget}>
-                <ChipGroup options={budgets} value={prefs.budget} onChange={(v) => update("budget", v)} />
-              </Field>
-            </div>
-            <Field label="Interests (pick at least one)" error={errors.interests}>
-              <div className="flex flex-wrap gap-2">
-                {interestsList.map((i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => toggleInterest(i)}
-                    className={`px-4 py-2 rounded-full text-sm capitalize border transition ${
-                      prefs.interests.includes(i)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/40 border-border hover:border-primary/50"
-                    }`}
-                  >
-                    {i}
-                  </button>
-                ))}
+          <div className="mt-10 overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="space-y-8 p-6 md:p-10">
+                <Field icon={CalendarDays} label="Số ngày" hint="Chọn thời lượng phù hợp với chuyến đi" error={errors.days}>
+                  <ChipGroup options={dayOptions} value={prefs.days} onChange={(v) => update("days", v)} />
+                </Field>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <Field icon={Users} label="Hình thức du lịch" error={errors.travelType}>
+                    <ChipGroup options={travelTypes} value={prefs.travelType} onChange={(v) => update("travelType", v)} />
+                  </Field>
+                  <Field icon={WalletCards} label="Ngân sách" error={errors.budget}>
+                    <ChipGroup options={budgets} value={prefs.budget} onChange={(v) => update("budget", v)} />
+                  </Field>
+                </div>
+                <Field icon={Heart} label="Bạn muốn trải nghiệm gì?" hint="Có thể chọn nhiều sở thích" error={errors.interests}>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {interestsList.map((interest) => {
+                      const selected = prefs.interests.includes(interest);
+                      const Icon = interestIcons[interest];
+                      return (
+                        <button
+                          key={interest}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => toggleInterest(interest)}
+                          className={`flex min-h-12 items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm capitalize transition-colors ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/50 hover:bg-mist/40"}`}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="flex-1">{interest}</span>
+                          {selected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <Field icon={Bike} label="Phương tiện" error={errors.transport}>
+                    <ChipGroup options={transports} value={prefs.transport} onChange={(v) => update("transport", v)} />
+                  </Field>
+                  <Field icon={Clock3} label="Giờ bắt đầu" hint="Dùng cho ngày đầu tiên">
+                    <input
+                      type="time"
+                      aria-label="Giờ bắt đầu"
+                      value={prefs.startTime}
+                      onChange={(e) => update("startTime", e.target.value)}
+                      className="h-11 rounded-xl border border-border bg-background px-4 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </Field>
+                </div>
               </div>
-            </Field>
-            <div className="grid md:grid-cols-2 gap-8">
-              <Field label="Transportation" error={errors.transport}>
-                <ChipGroup options={transports} value={prefs.transport} onChange={(v) => update("transport", v)} />
-              </Field>
-              <Field label="Start time">
-                <input
-                  type="time"
-                  value={prefs.startTime}
-                  onChange={(e) => update("startTime", e.target.value)}
-                  className="px-4 py-2.5 rounded-full bg-muted/50 border border-transparent focus:border-primary outline-none"
-                />
-              </Field>
-            </div>
-            <div className="pt-4 border-t border-border flex flex-wrap gap-3">
-              <button
-                onClick={generate}
-                disabled={loading}
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-apricot text-white font-medium shadow-soft hover:brightness-110 transition disabled:opacity-60"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {loading ? "AI is crafting your trip..." : "Generate Itinerary"}
-              </button>
-              {result && (
-                <button
-                  onClick={() => setEditing(false)}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-border hover:bg-muted transition"
-                >
-                  Back to itinerary
-                </button>
-              )}
+
+              <aside className="flex flex-col border-t border-border bg-mist/35 p-6 lg:border-l lg:border-t-0 lg:p-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Chuyến đi của bạn</p>
+                <h2 className="mt-3 font-serif text-2xl font-semibold capitalize">{prefs.days} tại Đà Lạt</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Bản xem trước tự cập nhật theo lựa chọn của bạn.</p>
+                <div className="mt-6 divide-y divide-primary/10 border-y border-primary/10">
+                  <SummaryRow icon={Users} label="Đồng hành" value={prefs.travelType} />
+                  <SummaryRow icon={WalletCards} label="Ngân sách" value={prefs.budget} />
+                  <SummaryRow icon={Bike} label="Di chuyển" value={prefs.transport} />
+                  <SummaryRow icon={Clock3} label="Khởi hành" value={prefs.startTime} />
+                  <SummaryRow icon={Heart} label="Sở thích" value={`${prefs.interests.length} lựa chọn`} />
+                </div>
+                <div className="mt-auto pt-7">
+                  <button
+                    onClick={generate}
+                    disabled={loading}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-apricot px-5 py-3.5 font-medium text-white shadow-soft transition hover:brightness-105 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {loading ? "Đang sắp xếp..." : "Tạo lịch trình"}
+                    {!loading && <ArrowRight className="h-4 w-4" />}
+                  </button>
+                  {result && (
+                    <button onClick={() => setEditing(false)} className="mt-3 w-full text-sm font-medium text-primary hover:underline">
+                      Quay lại lịch trình đã tạo
+                    </button>
+                  )}
+                </div>
+              </aside>
             </div>
           </div>
         )}
@@ -248,13 +327,13 @@ const TripPlanner = () => {
           <div className="mt-8 flex items-start gap-3 p-5 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-medium">Couldn't generate itinerary</p>
+              <p className="font-medium">Không thể tạo lịch trình</p>
               <p className="text-sm mt-1 opacity-90">{error}</p>
               <button
                 onClick={regenerate}
                 className="mt-3 inline-flex items-center gap-2 text-sm font-medium underline"
               >
-                <RefreshCw className="h-3.5 w-3.5" /> Try again
+                <RefreshCw className="h-3.5 w-3.5" /> Thử lại
               </button>
             </div>
           </div>
@@ -279,7 +358,7 @@ const TripPlanner = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-serif text-3xl font-semibold">Your AI itinerary</h2>
+                <h2 className="font-serif text-3xl font-semibold">Lịch trình của bạn</h2>
                 {result.summary && <p className="text-muted-foreground mt-1">{result.summary}</p>}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -287,20 +366,20 @@ const TripPlanner = () => {
                   onClick={() => setEditing(true)}
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-border hover:bg-muted transition text-sm font-medium"
                 >
-                  <Settings2 className="h-4 w-4" /> Edit preferences
+                  <Settings2 className="h-4 w-4" /> Sửa lựa chọn
                 </button>
                 <button
                   onClick={regenerate}
                   disabled={loading}
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-primary text-primary hover:bg-primary/5 transition text-sm font-medium disabled:opacity-60"
                 >
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Regenerate
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Tạo lại
                 </button>
                 <button
                   onClick={save}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition text-sm"
                 >
-                  <Save className="h-4 w-4" /> Save trip
+                  <Save className="h-4 w-4" /> Lưu chuyến đi
                 </button>
               </div>
             </div>
@@ -308,13 +387,11 @@ const TripPlanner = () => {
             <div className="flex items-start gap-3 p-5 rounded-2xl bg-mist/60 border border-primary/10">
               <Info className="h-5 w-5 shrink-0 mt-0.5 text-primary" />
               <div className="text-sm">
-                <p className="font-semibold text-primary">Why this itinerary?</p>
+                <p className="font-semibold text-primary">Vì sao lịch trình này phù hợp?</p>
                 <p className="mt-1 text-foreground/80">
-                  AI selected these places for a <b>{prefs.travelType}</b> trip over <b>{prefs.days}</b> on a{" "}
-                  <b>{prefs.budget}</b> budget, matching your interests ({prefs.interests.join(", ")}) and{" "}
-                  <b>{prefs.transport}</b> transport. It sequences stops to fit Da Lat's best visiting hours (cloud
-                  hunting at sunrise, cafes mid-morning, night market in the evening) and minimizes back-and-forth
-                  travel between areas.
+                  Các địa điểm này phù hợp với chuyến đi <b>{prefs.travelType}</b> trong <b>{prefs.days}</b>, ngân sách{" "}
+                  <b>{prefs.budget}</b>, sở thích ({prefs.interests.join(", ")}) và phương tiện <b>{prefs.transport}</b>.
+                  Các điểm dừng được sắp xếp theo thời gian tham quan phù hợp và hạn chế di chuyển vòng lại.
                 </p>
               </div>
             </div>
@@ -327,21 +404,21 @@ const TripPlanner = () => {
                     {day.theme && <span className="text-sm text-apricot font-medium">{day.theme}</span>}
                   </div>
                   <div className="mt-5 space-y-4">
-                    <TimeBlock icon={Sun} tint="bg-apricot/15 text-apricot" title="Morning" {...day.morning} />
-                    <TimeBlock icon={Coffee} tint="bg-mist text-primary" title="Afternoon" {...day.afternoon} />
-                    <TimeBlock icon={Moon} tint="bg-pine-dark/10 text-pine-dark" title="Evening" {...day.evening} />
+                    <TimeBlock icon={Sun} tint="bg-apricot/15 text-apricot" title="Buổi sáng" {...day.morning} />
+                    <TimeBlock icon={Coffee} tint="bg-mist text-primary" title="Buổi chiều" {...day.afternoon} />
+                    <TimeBlock icon={Moon} tint="bg-pine-dark/10 text-pine-dark" title="Buổi tối" {...day.evening} />
                   </div>
                   <div className="mt-6 grid md:grid-cols-3 gap-4 pt-6 border-t border-border text-sm">
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground">Food recommendations</p>
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">Gợi ý ẩm thực</p>
                       <ul className="mt-1 space-y-0.5">{day.food?.map((f) => <li key={f}>• {f}</li>)}</ul>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground">Estimated cost</p>
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">Chi phí dự kiến</p>
                       <p className="mt-1 font-medium text-primary">{day.cost}</p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground">Travel notes</p>
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">Lưu ý chuyến đi</p>
                       <p className="mt-1">{day.notes}</p>
                     </div>
                   </div>
@@ -357,16 +434,26 @@ const TripPlanner = () => {
 };
 
 const Field = ({
+  icon: Icon,
   label,
+  hint,
   children,
   error,
 }: {
+  icon?: React.ElementType;
   label: string;
+  hint?: string;
   children: React.ReactNode;
   error?: string;
 }) => (
   <div>
-    <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-2.5">{label}</label>
+    <div className="mb-3 flex items-start gap-2.5">
+      {Icon && <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />}
+      <div>
+        <p className="text-sm font-semibold text-foreground">{label}</p>
+        {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+      </div>
+    </div>
     {children}
     {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
   </div>
@@ -386,14 +473,28 @@ const ChipGroup = ({
       <button
         key={o}
         type="button"
+        aria-pressed={value === o}
         onClick={() => onChange(o)}
-        className={`px-4 py-2 rounded-full text-sm capitalize border transition ${
-          value === o ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 border-border hover:border-primary/50"
+        className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2 text-sm capitalize transition-colors ${
+          value === o ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/50 hover:bg-mist/40"
         }`}
       >
+        {value === o && <Check className="h-3.5 w-3.5" />}
         {o}
       </button>
     ))}
+  </div>
+);
+
+const SummaryRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) => (
+  <div className="flex items-center gap-3 py-3.5">
+    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-background text-primary">
+      <Icon className="h-4 w-4" />
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="truncate text-sm font-medium capitalize">{value}</p>
+    </div>
   </div>
 );
 
@@ -404,6 +505,7 @@ const TimeBlock = ({
   time,
   place,
   note,
+  alternatives,
 }: {
   icon: React.ElementType;
   tint: string;
@@ -411,6 +513,7 @@ const TimeBlock = ({
   time: string;
   place: string;
   note: string;
+  alternatives?: AlternativePlace[];
 }) => (
   <div className="flex gap-4">
     <div className={`h-10 w-10 rounded-full grid place-items-center shrink-0 ${tint}`}>
@@ -426,6 +529,7 @@ const TimeBlock = ({
         {place}
       </p>
       <p className="text-sm text-muted-foreground mt-1">{note}</p>
+      {alternatives && alternatives.length > 0 && <div className="mt-3 rounded-xl border border-dashed border-primary/25 bg-mist/25 p-3"><p className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Shuffle className="h-3.5 w-3.5" /> Lựa chọn thay thế</p>{alternatives.slice(0, 2).map((alternative) => <div key={alternative.place} className="mt-2 text-sm"><div className="flex items-start justify-between gap-2"><p className="font-medium">{alternative.place}</p><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${alternative.place}, ${alternative.address || "Đà Lạt"}`)}`} target="_blank" rel="noreferrer" className="text-primary" aria-label={`Mở ${alternative.place} trên Google Maps`}><ExternalLink className="h-3.5 w-3.5" /></a></div><p className="mt-0.5 text-xs text-muted-foreground">{alternative.note}</p></div>)}</div>}
     </div>
   </div>
 );

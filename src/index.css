@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Lora:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -70,6 +70,13 @@
   }
 }
 
+@media print {
+  header, footer, .print\:hidden, .fixed { display: none !important; }
+  body { background: white !important; }
+  main { max-width: none !important; padding: 0 !important; }
+  article, section { break-inside: avoid; box-shadow: none !important; }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -85,6 +92,15 @@
 
   h1, h2, h3, h4, h5 {
     @apply font-serif;
+  }
+
+  button, input, select, textarea, option {
+    font: inherit;
+    letter-spacing: inherit;
+  }
+
+  input::placeholder, textarea::placeholder {
+    font-family: inherit;
   }
 }
 

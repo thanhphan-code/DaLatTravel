@@ -1,4 +1,7 @@
-project_id = "jewomsxawvcwatmjoszb"
+project_id = "lyjdghkhkcojhhhtumuw"
 
 [functions.ai-trip-planner]
+verify_jwt = false
+
+[functions.travel-chat]
 verify_jwt = false

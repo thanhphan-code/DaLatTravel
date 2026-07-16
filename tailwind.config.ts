@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        serif: ["Fraunces", "Georgia", "serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Lora", "Georgia", "serif"],
+        sans: ["Be Vietnam Pro", "system-ui", "sans-serif"],
       },
 
       colors: {

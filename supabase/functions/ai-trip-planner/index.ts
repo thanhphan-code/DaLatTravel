@@ -1,127 +1,97 @@
-// Streaming AI trip planner for Da Lat. Uses Lovable AI Gateway (Gemini).
-// Later can be replaced by a Python FastAPI backend with the same request/response shape.
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" };
+const modelUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
-interface PlanRequest {
-  days: string;
-  travelType: string;
-  budget: string;
-  interests: string[];
-  transport: string;
-  startTime: string;
-}
+type PlanRequest = { days: string; travelType: string; budget: string; interests: string[]; transport: string; startTime: string };
+type RawRecord = Record<string, unknown>;
 
-const SYSTEM_PROMPT = `You are a local Da Lat, Vietnam travel expert building day-by-day itineraries.
+const dayCountFrom = (value: string) => Math.min(4, Math.max(1, Number.parseInt(value, 10) || 1));
+const textOf = (data: RawRecord) => {
+  const candidates = data?.candidates as Array<{ content?: { parts?: Array<{ text?: string }> } }> | undefined;
+  return candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim() || "";
+};
 
-Da Lat highlights you know well:
-- Nature: Xuan Huong Lake, Lang Biang Mountain (cloud hunting at sunrise), Datanla Waterfall, Tuyen Lam Lake, Pongour Waterfall
-- Photo spots: Cau Dat Tea Hill, Domaine de Marie Church, Linh Phuoc Pagoda, Puppy Farm, hydrangea flower fields
-- Cafes: Tiem Ca Phe Tui Mo To, F Cafe, Panorama Cafe, Mê Linh Coffee Garden
-- Food: Lẩu gà lá é (chicken hotpot with basil), bánh căn, nem nướng Bà Hùng, bánh tráng nướng, sữa đậu nành nóng, artichoke tea
-- Night: Da Lat Night Market, grilled skewers stalls
-- Weather tip: cool year-round (15-24°C), afternoon showers common Apr-Oct
+const callGemini = async (apiKey: string, payload: RawRecord) => {
+  const response = await fetch(modelUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json() as RawRecord;
+  if (!response.ok) throw new Error(`Gemini ${response.status}: ${JSON.stringify(data).slice(0, 400)}`);
+  return data;
+};
 
-Return ONLY valid JSON matching this schema exactly:
-{
-  "summary": "1-sentence trip summary",
-  "days": [
-    {
-      "label": "Day 1",
-      "theme": "Short theme like 'Cloud hunting & tea hills'",
-      "morning": { "time": "HH:MM", "place": "Place name", "note": "1-2 sentence tip" },
-      "afternoon": { "time": "HH:MM", "place": "Place name", "note": "1-2 sentence tip" },
-      "evening": { "time": "HH:MM", "place": "Place name", "note": "1-2 sentence tip" },
-      "food": ["3-4 specific dish or restaurant suggestions"],
-      "cost": "estimated VND range like '600,000 - 900,000 VND'",
-      "notes": "1-2 practical travel tips for the day"
-    }
-  ]
-}
-No prose, no markdown fences, JSON only.`;
+const validatePlan = (value: unknown, dayCount: number) => {
+  if (!value || typeof value !== "object") return false;
+  const root = value as { summary?: unknown; days?: unknown[] };
+  if (typeof root.summary !== "string" || !Array.isArray(root.days) || root.days.length !== dayCount) return false;
+  return root.days.every((day) => {
+    if (!day || typeof day !== "object") return false;
+    const item = day as RawRecord;
+    return ["morning", "afternoon", "evening"].every((period) => {
+      const slot = item[period] as RawRecord | undefined;
+      return slot && typeof slot.time === "string" && typeof slot.place === "string" && typeof slot.address === "string" && typeof slot.note === "string" && typeof slot.latitude === "number" && typeof slot.longitude === "number";
+    }) && Array.isArray(item.food) && typeof item.cost === "string" && typeof item.notes === "string";
+  });
+};
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+Deno.serve(async (request) => {
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (request.method !== "POST") return Response.json({ error: "Phương thức không được hỗ trợ." }, { status: 405, headers: jsonHeaders });
 
+  let body: PlanRequest;
+  try { body = await request.json(); }
+  catch { return Response.json({ error: "Thông tin chuyến đi không hợp lệ." }, { status: 400, headers: jsonHeaders }); }
+
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) return Response.json({ error: "Chưa cấu hình Gemini cho tính năng tạo lịch trình." }, { status: 503, headers: jsonHeaders });
+
+  const dayCount = dayCountFrom(body.days);
   try {
-    const key = Deno.env.get("LOVABLE_API_KEY");
-    if (!key) {
-      return new Response(JSON.stringify({ error: "AI is not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const variationAngles = [
+      "ưu tiên địa điểm mới, ít đông và trải nghiệm bản địa",
+      "cân bằng thiên nhiên, kiến trúc, ẩm thực và quán cà phê có phong cách riêng",
+      "tạo nhịp đi chậm, nhiều góc chụp ảnh và hoạt động thư giãn",
+      "ưu tiên trải nghiệm ngoài trời xen kẽ điểm trong nhà để linh hoạt thời tiết",
+      "khám phá các khu vực khác nhau nhưng vẫn tối ưu quãng đường mỗi ngày",
+    ];
+    const variation = variationAngles[Math.floor(Math.random() * variationAngles.length)];
+    const prompt = `Dùng Google Search để tìm địa điểm rồi tạo một lịch trình Đà Lạt hoàn toàn mới bằng tiếng Việt.
 
-    const body: PlanRequest = await req.json();
-    const userPrompt = `Build a Da Lat itinerary for:
-- Duration: ${body.days}
-- Travel type: ${body.travelType}
-- Budget: ${body.budget}
-- Interests: ${body.interests.join(", ") || "general sightseeing"}
-- Transportation: ${body.transport}
-- Start time each day: ${body.startTime}
+YÊU CẦU: ${dayCount} ngày; đi ${body.travelType}; ngân sách ${body.budget}; sở thích ${body.interests?.join(", ") || "tổng hợp"}; phương tiện ${body.transport}; giờ bắt đầu ngày đầu ${body.startTime}.
+HƯỚNG BIẾN THỂ LẦN NÀY: ${variation}.
 
-Match the vibe. If interests include "cloud hunting", include a Lang Biang or Cau Dat sunrise. If "cafes", suggest hillside/pine-view cafes. Respect the budget when recommending food and activities. Return JSON only.`;
+Quy tắc bắt buộc:
+- Trả đúng ${dayCount} phần tử days và đúng một địa điểm chính cho mỗi buổi.
+- Không dùng một lịch trình mẫu cố định, không lặp địa điểm giữa các ngày.
+- Mỗi ngày phải có ít nhất 4 nhóm trải nghiệm khác nhau trong số: thiên nhiên, kiến trúc, văn hóa, ẩm thực, cà phê, mua sắm, vận động, thư giãn.
+- Mỗi buổi có một địa điểm chính và một lựa chọn thay thế khác loại trong alternatives. Tổng cộng tối đa 6 địa điểm mỗi ngày để lịch không quá dày.
+- Ít nhất một ngày có địa điểm ít nổi tiếng hoặc trải nghiệm bản địa, không chỉ dùng các điểm du lịch quen thuộc.
+- Có thể chọn địa điểm ngoài dữ liệu của website, kể cả nơi mới hoặc ít nổi tiếng, miễn là có thật.
+- Xếp các nơi gần nhau trong cùng ngày, thời gian di chuyển phải khả thi bằng ${body.transport}.
+- Ghi tên, địa chỉ và tọa độ thực tế của từng nơi để vẽ bản đồ. Không chắc tọa độ thì chọn địa điểm khác.
+- Mỗi ghi chú tối đa 30 từ; chi phí dùng VND; food có 2 đến 4 gợi ý cụ thể.
+- Chỉ trả JSON thuần, không markdown, đúng cấu trúc: {"summary":"...","days":[{"label":"Ngày 1","theme":"...","morning":{"time":"HH:MM - HH:MM","place":"...","address":"...","latitude":11.9,"longitude":108.4,"note":"...","alternatives":[{"place":"...","address":"...","note":"..."}]},"afternoon":{"time":"...","place":"...","address":"...","latitude":11.9,"longitude":108.4,"note":"...","alternatives":[{"place":"...","address":"...","note":"..."}]},"evening":{"time":"...","place":"...","address":"...","latitude":11.9,"longitude":108.4,"note":"...","alternatives":[{"place":"...","address":"...","note":"..."}]},"food":["..."],"cost":"... VND","notes":"..."}]}`;
 
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": key,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const data = await callGemini(apiKey, {
+      systemInstruction: { parts: [{ text: "Bạn là chuyên gia thiết kế hành trình Đà Lạt. Mỗi lần tạo phải cá nhân hóa theo yêu cầu và dữ liệu tìm kiếm, không sao chép lịch mẫu. Chỉ trả JSON đúng schema." }] },
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      tools: [{ google_search: {} }],
+      generationConfig: { temperature: 0.9, maxOutputTokens: 8192 },
     });
-
-    if (upstream.status === 429) {
-      return new Response(JSON.stringify({ error: "AI is busy right now, please try again in a moment." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (upstream.status === 402) {
-      return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace." }), {
-        status: 402,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (!upstream.ok) {
-      const errText = await upstream.text();
-      console.error("Gateway error", upstream.status, errText);
-      return new Response(JSON.stringify({ error: "AI request failed", details: errText }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const data = await upstream.json();
-    const content = data?.choices?.[0]?.message?.content ?? "{}";
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      // strip possible code fences
-      const cleaned = content.replace(/^```json\s*|\s*```$/g, "").trim();
-      parsed = JSON.parse(cleaned);
-    }
-
-    return new Response(JSON.stringify(parsed), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    console.error("ai-trip-planner error", err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const text = textOf(data);
+    if (!text) throw new Error("Gemini không trả nội dung");
+    const parsed = JSON.parse(text.replace(/^```json\s*|\s*```$/g, "").trim());
+    if (!validatePlan(parsed, dayCount)) throw new Error("Lịch trình trả về thiếu dữ liệu bắt buộc");
+    return Response.json(parsed, { headers: jsonHeaders });
+  } catch (error) {
+    console.error("ai-trip-planner error", error);
+    const message = error instanceof Error ? error.message : "";
+    const quotaExceeded = message.includes("429") || message.toLowerCase().includes("quota");
+    return Response.json({ error: quotaExceeded ? "Gemini đã hết hạn mức sử dụng hôm nay. Hãy thử lại khi hạn mức được làm mới hoặc bật thanh toán cho API." : "Gemini chưa tạo được lịch trình hoàn chỉnh. Vui lòng thử lại sau ít phút." }, { status: quotaExceeded ? 429 : 502, headers: jsonHeaders });
   }
 });
