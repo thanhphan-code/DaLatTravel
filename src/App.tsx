@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import PlaceDetail from "./pages/PlaceDetail";
@@ -14,6 +14,7 @@ import SavedTrips from "./pages/SavedTrips";
 import SavedTripDetail from "./pages/SavedTripDetail";
 import AboutProject from "./pages/AboutProject";
 import NotFound from "./pages/NotFound";
+import Sources from "./pages/Sources";
 import TravelChat from "./components/TravelChat";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const AnimatedRoutes = () => {
         <Route path="/saved" element={<SavedTrips />} />
         <Route path="/saved/:id" element={<SavedTripDetail />} />
         <Route path="/about" element={<AboutProject />} />
+        <Route path="/sources" element={<Sources />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
@@ -39,16 +41,18 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AnimatedRoutes />
-        <TravelChat />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <MotionConfig reducedMotion="user">
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AnimatedRoutes />
+          <TravelChat />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </MotionConfig>
 );
 
 export default App;

@@ -1,0 +1,50 @@
+{
+  "dalat-palace": {
+    "path": "/images/catalog/dalat-palace.jpg",
+    "source": "https://www.dalatpalacehotel.com/en/engwelcome/",
+    "imageUrl": "https://www.dalatpalacehotel.com/wp-content/uploads/elementor/thumbs/1-r9gnw1hyqrcm2vi45k8lv2vzz9a02590478nncqwx8.jpg",
+    "publisher": "Trang của cơ sở lưu trú"
+  },
+  "ana-mandara": {
+    "path": "/images/catalog/ana-mandara.jpg",
+    "source": "https://www.anamandara-resort.com/",
+    "imageUrl": "https://www.anamandara-resort.com/wp-content/uploads/sites/233/2025/10/DJI_20250909072522_0541_D_HDR-2-e1779697246125.jpg",
+    "publisher": "Trang của cơ sở lưu trú"
+  },
+  "cu-tren-cay": {
+    "path": "/images/catalog/cu-tren-cay.jpg",
+    "source": "https://visitlamdong.vn/vi/csltcutrencay",
+    "imageUrl": "https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/havy90/11cutrencay/36854065_1650306901761987_5837289777115693056_n_636953585982831065.jpg",
+    "publisher": "Cổng du lịch Lâm Đồng"
+  },
+  "legume": {
+    "path": "/images/catalog/legume.jpg",
+    "source": "https://visitlamdong.vn/vi/legume",
+    "imageUrl": "https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/nhattanmh/l%c3%a9gumen/51930032_1038768482977601_4394009241845760_n_636907793095179058.jpg",
+    "publisher": "Cổng du lịch Lâm Đồng"
+  },
+  "lam-vien-square": {
+    "path": "/images/catalog/lam-vien-square.png",
+    "source": "https://visitlamdong.vn/vi/quangtruonglamvien",
+    "imageUrl": "https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/tanldg/%c4%90%e1%bb%8ba%20%c4%90i%e1%bb%83m/asv_636791863358369825.png",
+    "publisher": "Cổng du lịch Lâm Đồng"
+  },
+  "bao-dai-palace": {
+    "path": "/images/catalog/bao-dai-palace.jpg",
+    "source": "https://visitlamdong.vn/vi/dinhiii",
+    "imageUrl": "https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/Import/1504602345379-dinh3_636591438313634271.jpg",
+    "publisher": "Cổng du lịch Lâm Đồng"
+  },
+  "dalat-cathedral": {
+    "path": "/images/catalog/dalat-cathedral.jpg",
+    "source": "https://visitlamdong.vn/vi/nhathoconga",
+    "imageUrl": "https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/Import/nhathoconga_636591438069730022.jpg",
+    "publisher": "Cổng du lịch Lâm Đồng"
+  },
+  "banh-uot-trang": {
+    "path": "/images/catalog/banh-uot-trang.jpg",
+    "source": "https://visitlamdong.vn/vi/banhuottrang",
+    "imageUrl": "https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/tanldg/%E1%BA%A8m%20th%E1%BB%B1c/B%C3%A1nh%20%C6%B0%E1%BB%9Bt%20l%C3%B2ng%20g%C3%A0%20Trang/1_636773729166025326.jpg",
+    "publisher": "Cổng du lịch Lâm Đồng"
+  }
+}

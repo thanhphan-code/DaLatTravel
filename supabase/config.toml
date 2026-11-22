@@ -1,4 +1,4 @@
-project_id = "lyjdghkhkcojhhhtumuw"
+project_id = "dalat-travel"
 
 [functions.ai-trip-planner]
 verify_jwt = false

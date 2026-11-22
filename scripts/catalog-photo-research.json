@@ -1,0 +1,59 @@
+{
+  "palace": {
+    "url": "https://www.dalatpalacehotel.com/en/engwelcome/",
+    "images": [
+      "<img decoding=\"async\" class=\"swiper-slide-image\" src=\"https://www.dalatpalacehotel.com/wp-content/uploads/elementor/thumbs/1-r9gnw1hyqrcm2vi45k8lv2vzz9a02590478nncqwx8.jpg\" alt=\"1\" />",
+      "<img decoding=\"async\" class=\"swiper-slide-image\" src=\"https://www.dalatpalacehotel.com/wp-content/uploads/elementor/thumbs/2-r9gnw3dn4ff6q3fdul1v02ex610qhjggsgjmlwo4ks.jpg\" alt=\"2\" />",
+      "<img decoding=\"async\" class=\"swiper-slide-image\" src=\"https://www.dalatpalacehotel.com/wp-content/uploads/elementor/thumbs/3-r9gnw3dn4ff6q3fdul1v02ex610qhjggsgjmlwo4ks.jpg\" alt=\"3\" />",
+      "<img decoding=\"async\" class=\"swiper-slide-image\" src=\"https://www.dalatpalacehotel.com/wp-content/uploads/elementor/thumbs/4-r9gnw3dn4ff6q3fdul1v02ex610qhjggsgjmlwo4ks.jpg\" alt=\"4\" />",
+      "<img decoding=\"async\" class=\"swiper-slide-image\" src=\"https://www.dalatpalacehotel.com/wp-content/uploads/elementor/thumbs/5--r9gnw59bi3hrdbcnjlv451xucsrgwxnxgpulkglc8c.jpg\" alt=\"5\" />"
+    ]
+  },
+  "ana": {
+    "url": "https://www.anamandara-resort.com/",
+    "images": [
+      "<meta property=\"og:image\" content=\"https://www.anamandara-resort.com/wp-content/uploads/sites/233/2025/10/DJI_20250909072522_0541_D_HDR-2-e1779697246125.jpg\" />",
+      "<meta property=\"og:image:width\" content=\"2200\" />",
+      "<meta property=\"og:image:height\" content=\"1210\" />",
+      "<meta property=\"og:image:type\" content=\"image/jpeg\" />"
+    ]
+  },
+  "cu-tren-cay": {
+    "url": "https://visitlamdong.vn/vi/csltcutrencay",
+    "images": [
+      "<meta property=\"og:image\" content=\"https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/havy90/11cutrencay/36854065_1650306901761987_5837289777115693056_n_636953585982831065.jpg\" />"
+    ]
+  },
+  "legume": {
+    "url": "https://visitlamdong.vn/vi/legume",
+    "images": [
+      "<meta property=\"og:image\" content=\"https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/nhattanmh/l%c3%a9gumen/51930032_1038768482977601_4394009241845760_n_636907793095179058.jpg\" />"
+    ]
+  },
+  "lam-vien": {
+    "url": "https://visitlamdong.vn/vi/quangtruonglamvien",
+    "images": [
+      "<meta property=\"og:image\" content=\"https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/tanldg/%c4%90%e1%bb%8ba%20%c4%90i%e1%bb%83m/asv_636791863358369825.png\" />",
+      "<meta property=\"og:image:width\" content=\"0\" />",
+      "<meta property=\"og:image:height\" content=\"0\" />"
+    ]
+  },
+  "dinh-iii": {
+    "url": "https://visitlamdong.vn/vi/dinhiii",
+    "images": [
+      "<meta property=\"og:image\" content=\"https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/Import/1504602345379-dinh3_636591438313634271.jpg\" />"
+    ]
+  },
+  "cathedral": {
+    "url": "https://visitlamdong.vn/vi/nhathoconga",
+    "images": [
+      "<meta property=\"og:image\" content=\"https://dltm-cdn.vnptit3.vn/resources/portal//Images/LDG/Import/nhathoconga_636591438069730022.jpg\" />"
+    ]
+  },
+  "museum": {
+    "url": "https://baotanglamdong.com.vn/",
+    "images": [
+      "<meta property=\"og:image\" content=\"https://baotanglamdong.com.vn/assets/uploads/settings/site_logo_6a3136732ae617.44559847.png\">"
+    ]
+  }
+}

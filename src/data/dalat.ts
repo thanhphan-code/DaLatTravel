@@ -1,4 +1,7 @@
-// Mock data for TravelDaLat2026. Replace calls with FastAPI endpoints later.
+import catalogPhotos from "./catalogPhotos.json";
+import { additionalPlaces, additionalFoods, additionalStays } from "./catalogExpansion";
+import photoCredits from "./photoCredits.json";
+// Mock data for TravelDaLat. Replace calls with FastAPI endpoints later.
 import xuanHuong from "@/assets/places/xuan-huong.jpg";
 import langbiang from "@/assets/places/langbiang.jpg";
 import cauDat from "@/assets/places/cau-dat.jpg";
@@ -43,6 +46,7 @@ export type Category = {
 };
 
 export type Place = {
+  sourceUrl?: string;
   id: string;
   name: string;
   category: string;
@@ -62,6 +66,7 @@ export type Place = {
 };
 
 export type FoodItem = {
+  sourceUrl?: string;
   id: string;
   name: string;
   category: string;
@@ -73,6 +78,7 @@ export type FoodItem = {
 };
 
 export type Homestay = {
+  kind?: "Khách sạn" | "Homestay" | "Resort";
   id: string;
   name: string;
   price: string;
@@ -97,12 +103,12 @@ export type SavedTrip = {
 };
 
 export const categories: Category[] = [
-  { slug: "cloud-hunting", name: "Săn mây", description: "Đón biển mây lúc bình minh từ những đỉnh cao nổi tiếng quanh Đà Lạt.", image: langbiang },
-  { slug: "cafes", name: "Quán cà phê", description: "Những quán cà phê sườn đồi nhìn ra rừng thông, hồ nước và thung lũng.", image: catCafes },
-  { slug: "photo-spots", name: "Điểm chụp ảnh", description: "Vườn hoa, đồi chè và những góc màu sắc lý tưởng để lưu lại kỷ niệm.", image: catPhoto },
-  { slug: "nature", name: "Thiên nhiên", description: "Thác nước, hồ và rừng thông bao quanh thành phố cao nguyên.", image: datanla },
-  { slug: "local-food", name: "Ẩm thực địa phương", description: "Lẩu, bánh căn, nem nướng và nhiều món đặc trưng của Đà Lạt.", image: foodLauga },
-  { slug: "homestays", name: "Homestay", description: "Nhà gỗ, villa nhỏ và những nơi lưu trú ấm cúng giữa đồi thông.", image: hsPine },
+  { slug: "cloud-hunting", name: "Săn mây", description: "Đón biển mây lúc bình minh từ những đỉnh cao nổi tiếng quanh Đà Lạt.", image: "/images/verified/langbiang.jpg" },
+  { slug: "cafes", name: "Quán cà phê", description: "Những quán cà phê sườn đồi nhìn ra rừng thông, hồ nước và thung lũng.", image: "/images/verified/coffee.jpg" },
+  { slug: "photo-spots", name: "Điểm chụp ảnh", description: "Vườn hoa, đồi chè và những góc màu sắc lý tưởng để lưu lại kỷ niệm.", image: "/images/verified/dalat-railway-station.jpg" },
+  { slug: "nature", name: "Thiên nhiên", description: "Thác nước, hồ và rừng thông bao quanh thành phố cao nguyên.", image: "/images/verified/datanla.jpg" },
+  { slug: "local-food", name: "Ẩm thực địa phương", description: "Lẩu, bánh căn, nem nướng và nhiều món đặc trưng của Đà Lạt.", image: "/images/verified/banh-can.jpg" },
+  { slug: "homestays", name: "Homestay", description: "Nhà gỗ, villa nhỏ và những nơi lưu trú ấm cúng giữa đồi thông.", image: hsLaNha },
 ];
 
 const rawPlaces: Place[] = [
@@ -132,7 +138,7 @@ const rawPlaces: Place[] = [
     longDescription: "Rising to 2,167m, Lang Biang is the highest peak near Da Lat and the most famous cloud-hunting spot. Take a jeep to Radar Peak before sunrise for the iconic sea of clouds.",
     image: langbiang,
     bestTime: "Early morning",
-    cost: "80,000 VND",
+    cost: "50.000đ vé tham quan, chưa gồm xe jeep",
     rating: 4.6,
     address: "Lac Duong, ~12km from center",
     tips: ["Take a jeep to Radar Peak", "Bring a jacket, it's windy", "Sunrise cloud hunting is unreal"],
@@ -168,7 +174,7 @@ const rawPlaces: Place[] = [
     longDescription: "A multi-tiered waterfall accessible by alpine coaster through the pine forest — one of Da Lat's most fun family activities.",
     image: datanla,
     bestTime: "Late morning",
-    cost: "50,000 VND",
+    cost: "80.000đ vé tham quan, trò chơi tính riêng",
     rating: 4.4,
     address: "Deo Prenn, ~7km from center",
     tips: ["Ride the alpine coaster", "Wear grippy shoes", "Avoid weekends if possible"],
@@ -317,7 +323,7 @@ const rawPlaces: Place[] = [
 
 const placeTranslations: Record<string, Partial<Place>> = {
   "xuan-huong-lake": { name: "Hồ Xuân Hương", category: "Thiên nhiên", description: "Trái tim thơ mộng của Đà Lạt, lý tưởng để đi dạo và đạp vịt lúc bình minh.", longDescription: "Hồ nước hình lưỡi liềm giữa trung tâm Đà Lạt, bao quanh bởi hàng thông, vườn hoa và quán cà phê. Bạn có thể đi bộ buổi sáng hoặc đạp vịt khi hoàng hôn.", bestTime: "Bình minh / Hoàng hôn", cost: "Miễn phí", address: "Trung tâm Đà Lạt", tips: ["Đạp vịt vào lúc hoàng hôn", "Các quán cà phê gần hồ mở từ sáng sớm", "Phù hợp để chạy bộ buổi sáng"], suitableFor: ["Đi một mình", "Cặp đôi", "Gia đình"] },
-  langbiang: { name: "Núi Langbiang", category: "Thiên nhiên", description: "Đỉnh núi biểu tượng với tầm nhìn rộng ra rừng thông và biển mây.", longDescription: "Langbiang cao 2.167 m, là một trong những nơi săn mây nổi tiếng gần Đà Lạt. Bạn có thể đi xe jeep lên đỉnh Radar để ngắm cảnh.", bestTime: "Sáng sớm", address: "Lạc Dương, cách trung tâm khoảng 12 km", tips: ["Có thể đi xe jeep lên đỉnh Radar", "Mang áo khoác vì trên đỉnh nhiều gió", "Kiểm tra thời tiết trước khi săn mây"], suitableFor: ["Bạn bè", "Cặp đôi", "Gia đình"] },
+  langbiang: { name: "Núi Langbiang", category: "Thiên nhiên", description: "Đỉnh núi biểu tượng với tầm nhìn rộng ra rừng thông và biển mây.", longDescription: "Langbiang cao 2.167 m, là một trong những nơi săn mây nổi tiếng gần Đà Lạt. Bạn có thể đi xe jeep lên đỉnh Radar để ngắm cảnh.", bestTime: "Sáng sớm", address: "Lạc Dương, cách trung tâm khoảng 12 km", tips: ["Xe jeep hoạt động theo giờ mở cửa; cần hỏi quầy vé", "Mang áo khoác vì trên đỉnh nhiều gió", "Kiểm tra thời tiết trước khi săn mây"], suitableFor: ["Bạn bè", "Cặp đôi", "Gia đình"] },
   "cau-dat": { name: "Đồi chè Cầu Đất", category: "Điểm chụp ảnh", description: "Những luống chè xanh trải dài bên nhà máy chè hơn trăm năm tuổi.", longDescription: "Các đồi chè xanh và sương sớm biến Cầu Đất thành một trong những cảnh quan được yêu thích nhất Đà Lạt.", bestTime: "Buổi sáng", address: "Xuân Trường, cách trung tâm khoảng 25 km", tips: ["Đi sớm để tránh đông", "Phù hợp chụp ảnh chân dung", "Thử trà ô long tại địa phương"], suitableFor: ["Cặp đôi", "Bạn bè"] },
   datanla: { name: "Thác Datanla", category: "Thiên nhiên", description: "Thác nước nhiều tầng với máng trượt xuyên rừng thông.", longDescription: "Datanla là cụm thác nhiều tầng, nổi bật với hệ thống máng trượt và các hoạt động ngoài trời phù hợp gia đình.", bestTime: "Cuối buổi sáng", address: "Đèo Prenn, cách trung tâm khoảng 7 km", tips: ["Thử máng trượt xuyên rừng", "Mang giày có độ bám tốt", "Nên tránh cuối tuần nếu có thể"], suitableFor: ["Gia đình", "Bạn bè"] },
   "night-market": { name: "Chợ đêm Đà Lạt", category: "Văn hóa địa phương", description: "Ẩm thực đường phố, sữa đậu nành, đồ nướng và không khí nhộn nhịp về đêm.", longDescription: "Chợ đêm Đà Lạt sôi động với các quầy đồ ăn, sữa đậu nành nóng, món nướng và khu mua sắm trong tiết trời se lạnh.", bestTime: "Buổi tối", cost: "Vào cửa miễn phí", address: "Nguyễn Thị Minh Khai, trung tâm Đà Lạt", tips: ["Thử sữa đậu nành nóng và bánh tráng nướng", "Hỏi giá trước khi mua", "Cuối tuần thường rất đông"], suitableFor: ["Đi một mình", "Bạn bè", "Gia đình"] },
@@ -334,9 +340,18 @@ const placeTranslations: Record<string, Partial<Place>> = {
 
 const categoryVi: Record<string, string> = { Nature: "Thiên nhiên", "Photo Spot": "Điểm chụp ảnh", "Local Culture": "Văn hóa địa phương", Architecture: "Kiến trúc", Cafe: "Quán cà phê" };
 const suitableVi: Record<string, string> = { Solo: "Đi một mình", Couple: "Cặp đôi", Family: "Gia đình", Friends: "Bạn bè" };
-export const places: Place[] = rawPlaces.map((place) => {
+rawPlaces.push({
+  id: "tui-mo-to", name: "Tiệm cà phê Túi Mơ To", category: "Cafe",
+  description: "Quán cà phê tại hẻm Sào Nam với vườn cúc và tầm nhìn xuống thung lũng nhà kính.",
+  image: "", bestTime: "Chiều muộn", cost: "Xác nhận theo menu tại quán", rating: 4.6,
+  address: "Hẻm 31 Sào Nam, khu vực Trại Mát, Đà Lạt", budget: "medium",
+  suitableFor: ["Couple", "Friends", "Solo"], latitude: 11.94100, longitude: 108.48368,
+  tips: ["Đường vào hẻm và nhiều bậc thang; cân nhắc nếu đi cùng người hạn chế vận động.", "Kiểm tra giờ hoạt động trước khi đến."],
+});
+const verifiedPhotos: Record<string, { path: string }> = { ...photoCredits, ...catalogPhotos };
+export const places: Place[] = [...rawPlaces, ...additionalPlaces].map((place) => {
   const translated = { ...place, ...placeTranslations[place.id] };
-  return { ...translated, category: categoryVi[translated.category] || translated.category, suitableFor: translated.suitableFor?.map((item) => suitableVi[item] || item) };
+  return { ...translated, image: verifiedPhotos[place.id]?.path ?? "/images/photo-pending.svg", category: categoryVi[translated.category] || translated.category, suitableFor: translated.suitableFor?.map((item) => suitableVi[item] || item) };
 });
 
 const rawFoods: FoodItem[] = [
@@ -356,9 +371,11 @@ const rawFoods: FoodItem[] = [
 ];
 
 const foodCategoryVi: Record<string, string> = { Hotpot: "Lẩu", "Local Food": "Món địa phương", Dessert: "Tráng miệng", "Grilled Food": "Món nướng", "Coffee Shops": "Quán cà phê" };
-export const foods: FoodItem[] = rawFoods.map((food) => ({ ...food, category: foodCategoryVi[food.category] || food.category }));
+const foodPhotoKeys: Record<string, string> = { "banh-can": "banh-can", "banh-can-nha-chung": "banh-can", "banh-trang-nuong": "banh-trang-nuong", "mountain-coffee": "coffee", "nem-nuong-ba-hung": "nem-nuong", "banh-beo-so-4": "banh-beo" };
+export const foods: FoodItem[] = [...rawFoods, ...additionalFoods].map((food) => ({ ...food, image: verifiedPhotos[food.id]?.path ?? verifiedPhotos[foodPhotoKeys[food.id]]?.path ?? (food.id.startsWith("banh-can-") ? verifiedPhotos["banh-can"]?.path : undefined) ?? food.image, category: foodCategoryVi[food.category] || food.category }));
 
 export const homestays: Homestay[] = [
+  ...additionalStays,
   { id: "the-kupid", name: "The Kupid Homestay", price: "Từ 400.000đ/đêm", location: "Phường 3", suitableFor: "Cặp đôi", rating: 4.5, description: "Phòng kính nhìn đồi thông, không gian lãng mạn và cách trung tâm khoảng 3 km.", image: hsTheKupid, address: "47 Đặng Thái Thân, Phường 3, Đà Lạt", imageSource: "https://lamdongtours.com/khach-san-da-lat/the-kupid-dalat-no-single/" },
   { id: "dalat-lacasa", name: "Dalat Lacasa Homestay", price: "Từ 350.000đ/đêm", location: "Phường 10", suitableFor: "Cặp đôi", rating: 4.6, description: "Không gian ấm cúng, thiết kế nhẹ nhàng và thuận tiện di chuyển vào trung tâm.", image: hsLacasa, address: "10 Khe Sanh, Phường 10, Đà Lạt", imageSource: "https://focusasiatravel.com/review-dalat-lacasa-homestay/" },
   { id: "doi-mot-nguoi", name: "Đợi Một Người Homestay", price: "Từ 850.000đ/đêm", location: "Đèo Prenn", suitableFor: "Cặp đôi", rating: 4.5, description: "Nổi bật với quán cà phê nhà kính giữa hồ và không gian yên tĩnh bên sườn đồi.", image: hsDoiMotNguoi, address: "Tổ 65, Đường Đèo Prenn, Phường 3, Đà Lạt", imageSource: "https://hdvlocal.com/products/doi-mot-nguoi-homestay-da-lat" },
